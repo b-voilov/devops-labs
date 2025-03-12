@@ -16,6 +16,8 @@ sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" /etc/po
 
 # Allow replication connections from any IP (for demo purposes; restrict in production)
 echo "host replication all 0.0.0.0/0 md5" | sudo tee -a /etc/postgresql/14/main/pg_hba.conf
+echo "host postgres all 0.0.0.0/0 md5" | sudo tee -a /etc/postgresql/14/main/pg_hba.conf
+echo "wal_level = logical" | sudo tee -a /etc/postgresql/14/main/postgresql.conf
 
 # Restart PostgreSQL to apply changes
 sudo systemctl restart postgresql
@@ -71,10 +73,8 @@ func newReplicaStartupScript(masterIP pulumi.StringOutput) pulumi.StringOutput {
 	export PGPASSWORD="replicator_pass"
 	
 	# Perform a base backup from the master server
-	sudo -u postgres env PGPASSWORD='replicator_pass' pg_basebackup --host="$MASTER_IP" --username=replicator -P --wal-method=stream --pgdata=/var/lib/postgresql/14/main
+	sudo -u postgres env PGPASSWORD='replicator_pass' pg_basebackup  --host="$MASTER_IP" --username=replicator -P --wal-method=stream --pgdata=/var/lib/postgresql/14/main
 	
-	# Write recovery configuration to enable standby mode
-	echo "primary_conninfo = 'host=$MASTER_IP port=5432 user=replicator password=replicator_pass'" | sudo tee -a /var/lib/postgresql/14/main/standby.signal
 	
 	# Start PostgreSQL service
 	sudo systemctl start postgresql

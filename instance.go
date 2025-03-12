@@ -54,7 +54,6 @@ func NewPostgresMaster(ctx *pulumi.Context, provider pulumi.ProviderResource, zo
 		},
 	}, pulumi.Provider(provider))
 }
-
 func newReplicaStartupScript(masterIP pulumi.StringOutput) pulumi.StringOutput {
 	return pulumi.Sprintf(`#!/bin/bash
 	MASTER_IP="%s"
@@ -66,17 +65,16 @@ func newReplicaStartupScript(masterIP pulumi.StringOutput) pulumi.StringOutput {
 	sudo systemctl stop postgresql
 	
 	# Clear any existing data in the data directory
-	sudo rm -rf /var/lib/postgresql/14/main/*
+	sudo rm -rf /var/lib/postgresql/14/main
 	
 	# Set the replication password environment variable for pg_basebackup
 	export PGPASSWORD="replicator_pass"
 	
 	# Perform a base backup from the master server
-	sudo -u postgres pg_basebackup -h $MASTER_IP -D /var/lib/postgresql/14/main -U replicator -P --wal-method=stream
+	sudo -u postgres env PGPASSWORD='replicator_pass' pg_basebackup --host="$MASTER_IP" --username=replicator -P --wal-method=stream --pgdata=/var/lib/postgresql/14/main
 	
 	# Write recovery configuration to enable standby mode
-	echo "standby_mode = 'on'" | sudo tee /var/lib/postgresql/14/main/recovery.conf
-	echo "primary_conninfo = 'host=$MASTER_IP port=5432 user=replicator password=replicator_pass'" | sudo tee -a /var/lib/postgresql/14/main/recovery.conf
+	echo "primary_conninfo = 'host=$MASTER_IP port=5432 user=replicator password=replicator_pass'" | sudo tee -a /var/lib/postgresql/14/main/standby.signal
 	
 	# Start PostgreSQL service
 	sudo systemctl start postgresql

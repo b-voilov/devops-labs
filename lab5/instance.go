@@ -51,8 +51,8 @@ func NewPostgresMaster(ctx *pulumi.Context, provider pulumi.ProviderResource, zo
 			},
 		},
 		Metadata: pulumi.StringMap{
-			"startup-script": pulumi.String(masterStartupScript),
-			"ssh-keys":       pulumi.String(strings.Join(sshPublicKeys, "\n")),
+			//	"startup-script": pulumi.String(masterStartupScript),
+			"ssh-keys": pulumi.String(strings.Join(sshPublicKeys, "\n")),
 		},
 	}, pulumi.Provider(provider))
 }
@@ -83,7 +83,7 @@ func newReplicaStartupScript(masterIP pulumi.StringOutput) pulumi.StringOutput {
 }
 
 func NewPostgresReplica(ctx *pulumi.Context, provider pulumi.ProviderResource, zone string, masterIP pulumi.StringOutput, sshPublicKeys []string) (*compute.Instance, error) {
-	replicaStartupScript := newReplicaStartupScript(masterIP)
+	//replicaStartupScript := newReplicaStartupScript(masterIP)
 	return compute.NewInstance(ctx, "postgres-replica", &compute.InstanceArgs{
 		Name:        pulumi.String("postgres-replica"),
 		MachineType: pulumi.String("e2-micro"),
@@ -107,8 +107,8 @@ func NewPostgresReplica(ctx *pulumi.Context, provider pulumi.ProviderResource, z
 			pulumi.String("allow-ssh"),
 		},
 		Metadata: pulumi.StringMap{
-			"startup-script": replicaStartupScript,
-			"ssh-keys":       pulumi.String(strings.Join(sshPublicKeys, "\n")),
+			//"startup-script": replicaStartupScript,
+			"ssh-keys": pulumi.String(strings.Join(sshPublicKeys, "\n")),
 		},
 	}, pulumi.Provider(provider))
 }

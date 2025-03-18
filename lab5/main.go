@@ -98,7 +98,7 @@ func main() {
 		if err != nil {
 			return err
 		}
-		err = createAnsibleInventory(ctx, "inventory.ini", postgresMaster, postgresReplica, cfg.Require("sshPrivateKeyPath"))
+		err = createAnsibleInventory(ctx, "./inventory.ini", postgresMaster, postgresReplica, cfg.Require("sshPrivateKeyPath"))
 		if err != nil {
 			return err
 		}

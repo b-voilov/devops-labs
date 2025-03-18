@@ -1,0 +1,5 @@
+- name: Configure PostgreSQL replica node
+  hosts: postgres_replica
+  become: yes
+  roles:
+    - postgres_replica

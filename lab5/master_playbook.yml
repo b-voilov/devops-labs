@@ -1,0 +1,5 @@
+- name: Configure PostgreSQL master for replication
+  hosts: postgres_master
+  become: yes
+  roles:
+    - postgres_master

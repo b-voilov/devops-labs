@@ -1,0 +1,75 @@
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  become: yes
+
+- name: Install PostgreSQL and PostgreSQL Contrib packages
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - acl
+    state: present
+  become: yes
+- name: Check if pip is installed for Python 3.10
+  command: /usr/bin/python3.10 -m pip --version
+  register: pip_check
+  ignore_errors: yes
+
+- name: Download get-pip.py if pip is missing
+  get_url:
+    url: https://bootstrap.pypa.io/get-pip.py
+    dest: /tmp/get-pip.py
+    mode: '0755'
+  when: pip_check.rc != 0
+
+- name: Install pip for Python 3.10
+  become: yes
+  command: /usr/bin/python3.10 /tmp/get-pip.py
+  when: pip_check.rc != 0
+  
+- name: Ensure psycopg2-binary is installed for PostgreSQL modules
+  become: yes
+  pip:
+    name: psycopg2-binary
+    executable: pip3
+
+- name: Ensure PostgreSQL listens on all interfaces
+  lineinfile:
+    path: /etc/postgresql/14/main/postgresql.conf
+    regexp: "^#?listen_addresses\\s*="
+    line: "listen_addresses = '*'"
+    backrefs: yes
+  become: yes
+
+- name: Allow replication connections and client authentication in pg_hba.conf
+  blockinfile:
+    path: /etc/postgresql/14/main/pg_hba.conf
+    marker: "# {mark} ANSIBLE MANAGED REPLICATION CONFIG"
+    block: |
+      host replication all 0.0.0.0/0 md5
+      host postgres all 0.0.0.0/0 md5
+  become: yes
+
+- name: Ensure wal_level is set to logical in postgresql.conf
+  lineinfile:
+    path: /etc/postgresql/14/main/postgresql.conf
+    regexp: "^wal_level"
+    line: "wal_level = logical"
+    insertafter: EOF
+  become: yes
+
+- name: Restart PostgreSQL to apply configuration changes
+  service:
+    name: postgresql
+    state: restarted
+  become: yes
+
+- name: Create replication role with replication privileges
+  become: yes
+  become_user: postgres
+  postgresql_user:
+    name: replicator
+    password: replicator_pass
+    role_attr_flags: "REPLICATION,LOGIN"
+    state: present

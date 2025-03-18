@@ -1,0 +1,9 @@
+name: lab5
+description: Postgres 2-instance cluster in gcp
+runtime: go
+config:
+  sshPublicKeys: "./key/key.pub,./key/lector_key.pub"
+  sshPrivateKeyPath: "./key/key"
+  pulumi:tags:
+    value:
+      pulumi:template: gcp-go
